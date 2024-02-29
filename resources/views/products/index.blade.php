@@ -35,12 +35,20 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($products as $product)
+            
+            @foreach ($products as $product)
                 <tr>
                     <td>{{ $product->id }}</td>
                     <td>{{ $product->name }}</td>
                     <td><img class="product-img img-thumbnail" src="{{ Storage::url($product->image) }}" alt=""></td>
-                    <td>{{ $product->category }}</td>
+                    <td>
+                    
+                    @if(!empty($product->product_category->name))    
+                    {{ 
+                        $product->product_category->name
+                    }}
+                    @endif
+                    </td>
                     <td>{{ config('settings.currency_symbol') . $product->price }}</td>
                     <td>{{ $product->quantity }}</td>
                     <td>

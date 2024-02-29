@@ -21,10 +21,58 @@ class KitchenOrderController extends Controller
     // }
 
     public function index()
+    {
+        $kitchenOrders = Order::where('status', 'pending')
+            ->with(['items.product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    
+        foreach ($kitchenOrders as $order) {
+            foreach ($order->items as $item) {
+                if (trim($item->product->getParentCategoryName()) === 'Drinks') {
+                    if (count($order->items) == 1) {
+                        // return ''; // Assuming you want to return 0 if a single item with a product category name is found
+                    } else {
+                        $order->items = $order->items->filter(function ($item) {
+                            return empty($item->product->getParentCategoryName());
+                        });
+                    }
+                }
+            }
+        }
+    
+        return view('kitchen.index', compact('kitchenOrders'));
+    }
+
+
+    public function getPendingOrders(Request $request)
+    {
+        $lastDisplayedOrderId = $request->query('lastDisplayedOrderId');
+        $pendingOrders = Order::where('status', 'pending')
+            ->where('id', '>', $lastDisplayedOrderId)
+            ->with(['items.product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    
+        foreach ($pendingOrders as $order) {
+            $order->items = $order->items->filter(function ($item) {
+                return !$item->product->getParentCategoryName() === 'Drinks';
+            });
+        }
+    
+        return $pendingOrders;
+    }
+    
+
+
+    
+
+    public function index1()
 {
     // die("Index controller");
     $kitchenOrders = Order::where('status', 'pending')
         ->with(['items.product'])
+       
         ->orderBy('created_at', 'desc')
         // ->limit(2)
         ->get();
@@ -32,7 +80,7 @@ class KitchenOrderController extends Controller
     return view('kitchen.index', compact('kitchenOrders'));
 }
 
-    public function getPendingOrders(Request $request)
+    public function getPendingOrders2(Request $request)
     {
         $lastDisplayedOrderId = $request->query('lastDisplayedOrderId');
         $pendingOrders = Order::where('status', 'pending')
@@ -40,10 +88,10 @@ class KitchenOrderController extends Controller
         ->with(['items.product'])
         ->orderBy('created_at', 'desc')
         ->get();
-        
-    
         return $pendingOrders;
     }
+    
+
 
     public function show($id)
     {
@@ -93,40 +141,45 @@ class KitchenOrderController extends Controller
                 return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
             }
         }
-
-        if(isset($request->is_done)){
-
-            $this->validate($request, [
-                'is_done' => 'required|boolean',
-            ]);
-
-            $status = $request->is_done ? 'processed' : 'failed';
-            $reason = '';
+        
+        if($order->status === 'processed' || $order->status === 'failed') {
+            return response()->json(['message' => 'Order already marked as '.$order->status]);
+        }else{
             
-            if(isset($request->reason)){
-                $reason = $request->reason;
-            }
 
-            // Update the associated order status
-            if ($id) {
-                $order = Order::find($id);
-                $order->status = $status;
-                $order->reason = $reason;
+            if(isset($request->is_done)){
 
-                if($order->status == 'failed') {
-                    foreach ($order->items as $item) {
-                        $product = Product::find($item->product_id);
-                        $product->quantity += $item->quantity;
-                        $product->save();
-                    }
+                $this->validate($request, [
+                    'is_done' => 'required|boolean',
+                ]);
+
+                $status = $request->is_done ? 'processed' : 'failed';
+                $reason = '';
+                
+                if(isset($request->reason)){
+                    $reason = $request->reason;
                 }
 
-                $order->save();
+                // Update the associated order status
+                if ($id) {
+                    $order = Order::find($id);
+                    $order->status = $status;
+                    $order->reason = $reason;
+
+                    if($order->status == 'failed') {
+                        foreach ($order->items as $item) {
+                            $product = Product::find($item->product_id);
+                            $product->quantity += $item->quantity;
+                            $product->save();
+                        }
+                    }
+
+                    $order->save();
+                }
+
+                return response()->json(['message' => 'Order status updated successfully']);
             }
-
-            return response()->json(['message' => 'Order status updated successfully']);
         }
-
       // Retrieve customer name and payment methods for response
       $response = [];
       if ($request->filled('customer_id') || $request->filled('payment_method')) {

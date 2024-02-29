@@ -81,7 +81,7 @@ class PrintController extends Controller
         // Loop through the cart items and associate them with the order
         foreach ($order->items as $item) {
             // Calculate the total price for the item
-            $totalPrice = $item->price * $item->quantity;
+            $totalPrice = $item->price * 1;
             $product_name = Product::findorFail($item->product_id)->name;
 
             // Push an associative array containing item details to the $itemDetails array

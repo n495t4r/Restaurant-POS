@@ -21,7 +21,6 @@ class OrderController extends Controller
     }
 
     public function index() {
-        
         $orders = Order::query();
 
         $customers = Order::with('customer:id,first_name,last_name')

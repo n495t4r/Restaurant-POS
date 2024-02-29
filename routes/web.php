@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\Invoice\InvoiceController;
 use App\Http\Controllers\PrintController;
+use App\Http\Controllers\ProductCategoryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -58,7 +59,8 @@ Route::prefix('/admin')->middleware('auth')->group(function () {
     Route::resource('expense-categories', ExpenseCategoryController::class)->except(['create']);
     // Route::post('/print', [InvoiceController::class, 'printInvoice'])->name('print.invoice');
     Route::post('/print', [PrintController::class, 'printInvoice'])->name('print.invoice');
-
+    // Define routes for ProductCategoryController using resourceful routing    
+    Route::resource('product-categories', ProductCategoryController::class);
 });
 
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

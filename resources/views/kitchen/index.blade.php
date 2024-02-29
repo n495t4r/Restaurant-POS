@@ -155,6 +155,11 @@
                     console.log(response.data.message);
                     var orderElement = document.getElementById('order-' + orderId);
                     orderElement.remove();
+
+                    Swal.fire(
+                        response.data.message,
+                        'warning'
+                    );
                     return response.data;
                 })
                 .catch(error => {
@@ -213,7 +218,7 @@
         const lastDisplayedOrderId = getLastDisplayedOrderId();
         console.log('Last Displayed Order ID:', lastDisplayedOrderId);
         
-        axios.get('/admin/get-pending-orders?lastDisplayedOrderId='+lastDisplayedOrderId, {
+        axios.get('/admin/get-pending-orders?lastDisplayedOrderId='+lastDisplayedOrderId+ '&_=' + Date.now(), {
             headers: {
                 'Authorization': 'Bearer ' + window.Laravel.csrfToken, // Add your CSRF token here
             },
@@ -222,9 +227,18 @@
             console.log('New Orders Received:', response.data);
             const pendingOrders = response.data;
 
+            // Filter out items with category name "Drinks"
+            const filteredOrders = pendingOrders.map(order => ({
+                ...order,
+                items: order.items.filter(item => {
+                    const category = item.product.product_category;
+                    return !(category && category.parent && category.parent.name === 'Drinks');
+                })
+            })).filter(order => order.items.length > 0);
+
             // Check if there are new pending orders
-            if (pendingOrders.length > 0) {
-                updateKitchenDisplay(response.data)
+            if (filteredOrders.length > 0) {
+                updateKitchenDisplay(filteredOrders);
             }
         })
         .catch(error => {
@@ -233,7 +247,7 @@
     }
 
     // Check for new orders every 5 seconds (adjust the interval as needed)
-    setInterval(checkForNewOrders, 5000);
+    setInterval(checkForNewOrders, 15000);
 
     setInterval(function() {
         location.reload();

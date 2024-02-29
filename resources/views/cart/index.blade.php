@@ -349,12 +349,6 @@
 
                         // Print the content
                         printWindow.print();
-
-                        // Close the window after printing
-                        // setTimeout(function() {
-                        //     printWindow.close();
-                        // }, 3000); // Adjust the delay as needed
-
                     },
                     error: function(xhr, status, error) {
                         console.error(xhr.responseText);

@@ -35,7 +35,7 @@ class ProductController extends Controller
             $products = $query->where('name', 'LIKE', "%{$request->search}%");
         }
         
-        $products = $products->latest()->paginate(200);
+        $products = $products->with('product_category')->latest()->paginate(200);
         
         if (request()->wantsJson()) {
             return ProductResource::collection($products);
