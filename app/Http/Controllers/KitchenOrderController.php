@@ -21,28 +21,28 @@ class KitchenOrderController extends Controller
     // }
 
     public function index()
-    {
-        $kitchenOrders = Order::where('status', 'pending')
-            ->with(['items.product'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-    
-        foreach ($kitchenOrders as $order) {
-            foreach ($order->items as $item) {
-                if (trim($item->product->getParentCategoryName()) === 'Drinks') {
-                    if (count($order->items) == 1) {
-                        // return ''; // Assuming you want to return 0 if a single item with a product category name is found
-                    } else {
-                        $order->items = $order->items->filter(function ($item) {
-                            return empty($item->product->getParentCategoryName());
-                        });
-                    }
-                }
-            }
-        }
-    
-        return view('kitchen.index', compact('kitchenOrders'));
+{
+    $kitchenOrders = Order::where('status', 'pending')
+        ->with(['items.product.product_category.parent'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    foreach ($kitchenOrders as $order) {
+        $order->items = $order->items->filter(function ($item) {
+            $parentCategoryName = $item->product->getParentCategoryName();
+            return $parentCategoryName !== 'Drinks' && !empty($parentCategoryName);
+        });
     }
+
+    // Check if any kitchen order has no items left after filtering
+    if ($kitchenOrders->isEmpty() || $kitchenOrders->every(function ($order) {
+        return $order->items->isEmpty();
+    })) {
+        $kitchenOrders = collect(); // Set the kitchen orders to an empty collection
+    }
+
+    return view('kitchen.index', compact('kitchenOrders'));
+}
 
 
     public function getPendingOrders(Request $request)
@@ -67,7 +67,7 @@ class KitchenOrderController extends Controller
 
     
 
-    public function index1()
+    public function drinks()
 {
     // die("Index controller");
     $kitchenOrders = Order::where('status', 'pending')
@@ -77,7 +77,7 @@ class KitchenOrderController extends Controller
         // ->limit(2)
         ->get();
 
-    return view('kitchen.index', compact('kitchenOrders'));
+    return view('drinks.index', compact('kitchenOrders'));
 }
 
     public function getPendingOrders2(Request $request)

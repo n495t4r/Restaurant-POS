@@ -172,6 +172,7 @@ class OrderController extends Controller
             // you can do it here
             $product = Product::find($item['id']);
             $product->quantity -= $item['quantity'];
+            $product->counter += $item['quantity'];
             $product->save();
         }
     

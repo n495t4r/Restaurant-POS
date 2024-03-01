@@ -10,7 +10,7 @@ class UpdateProductCategoryIdInProductsTable extends Migration
     public function up()
     {
         Product::where('category', 'like', '%Alc%')->update(['product_category_id' => 9]);
-        Product::where('category', 'like', '%Drinks')->update(['product_category_id' => 10]);
+        Product::where('category', 'like', '%Drinks')->update(['product_category_id' => 10]); //non-alc
     }
 
     public function down()

@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Kitchen Display')
-@section('content-header', 'Kitchen Display')
+@section('title', 'Drinks Display')
+@section('content-header', 'Drinks Display')
 @section('content-actions')
     <!-- <a href="{{route('cart.index')}}" class="btn btn-success">Open POS</a> -->
 @endsection
@@ -11,44 +11,7 @@
     <div class="row">
         <div class="col-md-8" id="kitchen-orders">
             @if(count($kitchenOrders) > 0)
-                @foreach($kitchenOrders as $order)
-                    <div class="card mb-3" id="order-{{ $order->id }}">
-                        <div class="card-header">
-                            <?php 
-                                $time = $order->created_at->format('h:i a');
-                                $date = $order->created_at->format('D');
-                            ?>
-                            <h5 class="card-title">Order ID: {{ $order->id }} <span class="badge badge-warning"> {{$date}}, {{$time}}  </span></h5>
-                        </div>
-                        <div class="card-body">
-                            @foreach($order->items as $index => $item)
-                                <h6>
-                                    <ul>
-                                        <!-- <li><span class="item-counter">{{ $index + 1 }}.</span> -->
-                                        <strong>{{ $item->quantity }}x</strong> {{ $item->product->name }} -{{ round($item->price,0) }}
-                                    </ul>
-                                </h6>
-                            @endforeach
-                        
-                            <p>Total Products: {{ $order->items->sum('quantity') }}</p>
-
-                            @if($order->commentForCook != "")
-                                <strong>Note: {{ $order->commentForCook }}</strong>
-                            @endif
-                        </div>
-                        <div class="card-footer">
-                            <tr>
-                                <td>
-                            <button class="btn btn-danger mr-5 md-3" style="min-width: 100px;" onclick="updateOrderStatus({{ $order->id }}, 0)">Cancel</button>
-                                </td>
-                                <td><span width="900px;"></span></td>
-                                <td>
-                            <button class="btn btn-success ml-5" style="min-width: 100px;" onclick="updateOrderStatus({{ $order->id }}, 1)">Ready</button>
-                                </td>
-                            </tr>
-                        </div>
-                    </div>
-                @endforeach
+                
             @else
                 <p class='no_orders'>No pending orders at the moment.</p>
             @endif
@@ -160,55 +123,75 @@
 
     // Define a set to store the IDs of orders that have been displayed
     const displayedOrderIds = new Set();
+
+   // Function to check for new orders
+function checkForNewOrders() {
+    const lastDisplayedOrderId = getLastDisplayedOrderId();
+    console.log('Last Displayed Order ID:', lastDisplayedOrderId);
     
-    // Function to check for new orders
-    function checkForNewOrders() {
-        const lastDisplayedOrderId = getLastDisplayedOrderId();
-        console.log('Last Displayed Order ID:', lastDisplayedOrderId);
-        
-        axios.get('/admin/get-pending-orders?lastDisplayedOrderId=' + lastDisplayedOrderId + '&_=' + Date.now(), {
-            headers: {
-                'Authorization': 'Bearer ' + window.Laravel.csrfToken, // Add your CSRF token here
-            },
-        })
-        .then(response => {        
-            console.log('New Orders Received:', response.data);
-            const pendingOrders = response.data;
+    axios.get('/admin/get-pending-orders?lastDisplayedOrderId=' + lastDisplayedOrderId + '&_=' + Date.now(), {
+        headers: {
+            'Authorization': 'Bearer ' + window.Laravel.csrfToken, // Add your CSRF token here
+        },
+    })
+    .then(response => {        
+        console.log('Orders Received:', response.data);
+        const pendingOrders = response.data;
 
-            // Filter out only the new orders that haven't been displayed yet and sort them by ID in descending order
-            const newOrders = pendingOrders
-                .filter(order => !displayedOrderIds.has(order.id));
+        // Filter out only the new orders that haven't been displayed yet and sort them by ID in descending order
+        const newOrders = pendingOrders
+            .filter(order => !displayedOrderIds.has(order.id))
+            .sort((a, b) => a.id - b.id);
 
+            console.log('Sorted: ', newOrders);
+
+        // Check if there are new pending orders
+        if (newOrders.length > 0) {
+            // Filter out items with category name "Drinks" for the new orders
+            const filteredOrders = newOrders.map(order => ({
+                ...order,
+                items: order.items.filter(item => {
+                    const category = item.product.product_category;
+                    return (category && category.parent && category.parent.name === 'Drinks');
+                })
+            })).filter(order => order.items.length > 0);
+
+            // Update the kitchen display with the filtered new orders
             // Check if there are new pending orders
-            if (newOrders.length > 0) {
-                // Filter out items with category name "Drinks" for the new orders
-                const filteredOrders = newOrders.map(order => ({
-                    ...order,
-                    items: order.items.filter(item => {
-                        const category = item.product.product_category;
-                        return !(category && category.parent && category.parent.name === 'Drinks');
-                    })
-                })).filter(order => order.items.length > 0).sort((a, b) => a.id - b.id);
-;
-                // Update the kitchen display with the filtered new orders
-                if (filteredOrders.length > 0) {
-                    updateKitchenDisplay(filteredOrders);
-                }
+            if (filteredOrders.length > 0) {
+                // console.log('otherCat: ', otherCategory);
+                updateKitchenDisplay(filteredOrders, newOrders);
             }
-        })
-        .catch(error => {
-            console.error('Error checking for new orders:', error);
-        });
-    }
+        }
+    })
+    .catch(error => {
+        console.error('Error checking for new orders:', error);
+    });
+}
 
     // Check for new orders every 5 seconds (adjust the interval as needed)
     setInterval(checkForNewOrders, 5000);
 
     checkForNewOrders();
-    
+
     setInterval(function() {
         location.reload();
     }, 60 * 60 * 1000); // 60 minutes in milliseconds
+
+    function hasOtherCategory(orderId, newOrders) {
+        for (const order of newOrders) {
+            if (order.id === orderId) {
+                for (const item of order.items) {
+                    const category = item.product.product_category;
+                    if (!category || !category.parent || category.parent.name !== 'Drinks') {
+                        return true; // Return false if any item doesn't have a drinks category or is null
+                    }
+                }
+                return false; // Return true if all items have a drinks category
+            }
+        }
+        return false; // Return false if the order with the provided orderId is not found
+    }
 
 
     // Function to play sound
@@ -219,13 +202,19 @@
         });
     }
 
-    function updateKitchenDisplay(orders) {
+    let display = 'auto; opacity: 1;';
+
+    function updateKitchenDisplay(orders, newOrders) {
 
         console.log("UpdateKitchenDisplay UI");
-        
         // Update your UI to display the new order
         for (const order of orders) {
-
+            if (hasOtherCategory(order.id, newOrders)){
+                display = 'none; opacity: 0.5;';
+                console.log('Display: ', display);
+            }else{
+                display = 'auto; opacity: 1;';
+            }
             const commentForCookHtml = (order.commentForCook !== null && order.commentForCook !== "") ? `<strong>Note: ${order.commentForCook}</strong>` : "";
             var created_at = new Date(order.created_at);
             // Formatting time in 12-hour format with AM/PM
@@ -253,11 +242,11 @@
                     <div class="card-footer">
                         <tr>
                             <td>
-                        <button class="btn btn-danger mr-5 md-3" style="min-width: 100px;" onclick="updateOrderStatus(${order.id }, 0)">Cancel</button>
+                        <button class="btn btn-danger mr-5 md-3" style="min-width: 100px; pointer-events:${display};" onclick="updateOrderStatus(${order.id }, 0)">Cancel</button>
                             </td>
                             <td><span width="900px;"></span></td>
                             <td>
-                        <button class="btn btn-success ml-5" style="min-width: 100px;" onclick="updateOrderStatus(${order.id}, 1)">Ready</button>
+                        <button class="btn btn-success ml-5" style="min-width: 100px; pointer-events:${display};" onclick="updateOrderStatus(${order.id}, 1)">Ready</button>
                             </td>
                         </tr>
                     </div>

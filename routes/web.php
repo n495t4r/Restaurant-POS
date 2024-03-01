@@ -44,6 +44,7 @@ Route::prefix('/admin')->middleware('auth')->group(function () {
     // routes/web.php
     // Kitchen Orders routes
     Route::get('/kitchen', [KitchenOrderController::class, 'index'])->name('kitchen.index');
+    Route::get('/drinks', [KitchenOrderController::class, 'drinks'])->name('drinks.index');
     // Route::get('/kitchen/{id}', [KitchenOrderController::class, 'show'])->name('kitchen.show');
     Route::patch('/kitchen/{id}', [KitchenOrderController::class, 'update'])->name('kitchen.update');
     Route::get('/get-pending-orders', [KitchenOrderController::class, 'getPendingOrders'])->name('kitchen.getPendingOrders');
