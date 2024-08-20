@@ -20,12 +20,12 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 // Redirect from '/' to '/admin'
-Route::redirect('/', '/admin');
+Route::redirect('/', '/admin/cart');
 
 Auth::routes();
 
 Route::prefix('/admin')->middleware('auth')->group(function () {
-    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::get('/', [CartController::class, 'index']);
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingController::class, 'store'])->name('settings.store');
     Route::resource('products', ProductController::class);

@@ -12,14 +12,6 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
 
-    function __construct()
-    {
-         $this->middleware('permission:order-list', ['only' => ['index','store','update']]);
-        //  $this->middleware('permission:order-create', ['only' => ['create','store']]);
-        //  $this->middleware('permission:order-edit', ['only' => ['edit','update']]);
-        //  $this->middleware('permission:order-delete', ['only' => ['destroy']]);
-    }
-
     public function index() {
         $orders = Order::query();
 

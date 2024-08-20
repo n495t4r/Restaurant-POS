@@ -58,24 +58,21 @@
                                 {{ config('settings.currency_symbol') }}<span id="total-amount" class="text-right">0.00</span>
                             </div>
                         </div>
-
                     </div>
                     <div class="row">
                     <div class="col-md-7">
-                        <button id="pack-cart-btn" class="btn btn-info mr-3" style="width: 200px;">Pack</button>
-                        <button id="empty-cart-btn" class="btn btn-danger" style="width: 200px;" disabled>Empty Cart</button>
+                        <!-- <button id="pack-cart-btn" class="btn btn-info mr-3" style="width: 200px;">Pack</button> -->
+                        <button id="empty-cart-btn" class="btn btn-danger" style="width: 150px;" disabled>Empty Cart</button>
                     </div>
-                        <div class="col-md-2 text-right">
-                            <button id="submit-order-btn" class="btn btn-success float-left" style="width: 200px;" disabled>Submit Order</button>
+                        <div class="col-md-4 text-right">
+                            <button id="submit-order-btn" class="btn btn-success float-left" style="width: 150px;" disabled>Submit Order</button>
                         </div>
                     </div>
-
-
                 </div>
             </div>
-            <div class="col-md-5 col-lg=5" id="packed-items">
+            <!-- <div class="col-md-5 col-lg=5" id="packed-items"> -->
                 <!-- Packed items will be displayed here -->
-            </div>
+            <!-- </div> -->
 
             <div class="mainproduct col-sm-10 col-md-5 col-lg-5">
                 <div class="search-container">
