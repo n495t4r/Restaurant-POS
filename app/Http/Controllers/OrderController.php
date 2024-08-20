@@ -97,7 +97,7 @@ class OrderController extends Controller
         $paymentFilter = $request->input('payment', []);
         
         // Apply payment filters if at least one method is selected
-        if (!empty($paymentFilter)) {
+        if (!empty($paymentFilter) && !in_array('empty', $paymentFilter)) {
             // Filter orders based on selected payment method
             $query->whereHas('payments', function ($query) use ($paymentFilter) {
                 $query->where(function ($query) use ($paymentFilter) {
@@ -106,7 +106,18 @@ class OrderController extends Controller
                     }
                 });
             });
-        }
+        }else{
+		$query->whereHas('payments', function ($query) use ($paymentFilter) {
+                $query->where(function ($query) use ($paymentFilter) {
+                    foreach ($paymentFilter as $method) {
+                        $query->whereJsonContains('payment_methods', null)
+                        ->orWhereJsonContains('payment_methods', 'Unpaid')
+                        ->orWhereJsonContains('payment_methods', '[]')
+                        ->orWhereJsonContains('payment_methods', '');
+                    }
+                });
+            });
+	    }
 
         $selectedCustomers = $request->input('selectedCustomers');
         if ($selectedCustomers) {
@@ -177,11 +188,11 @@ class OrderController extends Controller
         }
     
         // Create a payment record for the order
-        $order->payments()->create([
-            'amount' => $request->amount,
-            'payment_methods' => json_encode($request->payment_methods),
-            'user_id' => $request->user()->id,
-        ]);
+        // $order->payments()->create([
+        //     'amount' => $request->amount,
+        //     'payment_methods' => json_encode($request->payment_methods),
+        //     'user_id' => $request->user()->id,
+        // ]);
     
         // You can trigger events or notifications here if needed
     

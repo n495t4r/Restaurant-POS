@@ -66,6 +66,10 @@
                             <input type="checkbox" id="Transfer" name="payment[]" value="Transfer" {{ in_array('Transfer', (array) request('payment')) ? 'checked' : '' }}>
                             <label for="Transfer">Transfer</label>
                         </div>
+                        <div>
+                            <input type="checkbox" id="empty" name="payment[]" value="empty" {{ in_array('empty', (array) request('payment')) ? 'checked' : '' }}>
+                            <label for="empty">Unpaid</label>
+                        </div>
                     </div>
                     
                     <div class="col-md-2" style="margin-left: 35px;">
@@ -74,6 +78,7 @@
                         </label>
                         <input type="checkbox" name="selectedCustomers" id="selectedCustomers" value="remove_cng" {{ request('selectedCustomers') ? 'checked' : '' }} />
                     </div>
+                    
                     <div class="col-md-2">
                         <button id="applyFilter" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
                         <button class="btn btn-secondary" type="button" id="clearSelectionButton"><i class="fas fa-times"></i> Clear Selection</button>
@@ -321,7 +326,7 @@
         //generates the HTML dynamically for the orders table
         function generateOrderRows(orders, customers) {
             var html = '';
-            var paymentMethods = ['POS', 'Transfer', 'Cash'];
+            var paymentMethods = ['POS', 'Transfer', 'Cash', '[]'];
             var orderTableBody = document.getElementById('orderTableBody');
                 orderTableBody.innerHTML = ''; // Clear existing rows
 

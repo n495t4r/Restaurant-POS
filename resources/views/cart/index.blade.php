@@ -61,9 +61,10 @@
 
                     </div>
                     <div class="row">
-                        <div class="col-md-7">
-                            <button id="empty-cart-btn" class="btn btn-danger" style="width: 200px;" disabled>Empty Cart</button>
-                        </div>
+                    <div class="col-md-7">
+                        <button id="pack-cart-btn" class="btn btn-info mr-3" style="width: 200px;">Pack</button>
+                        <button id="empty-cart-btn" class="btn btn-danger" style="width: 200px;" disabled>Empty Cart</button>
+                    </div>
                         <div class="col-md-2 text-right">
                             <button id="submit-order-btn" class="btn btn-success float-left" style="width: 200px;" disabled>Submit Order</button>
                         </div>
@@ -72,6 +73,10 @@
 
                 </div>
             </div>
+            <div class="col-md-5 col-lg=5" id="packed-items">
+                <!-- Packed items will be displayed here -->
+            </div>
+
             <div class="mainproduct col-sm-10 col-md-5 col-lg-5">
                 <div class="search-container">
                     <input type="text" id="search-input" style="width: 50%;" placeholder="Search products...">
@@ -102,9 +107,6 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-
-        
-
         $(document).ready(function() {
             let cart = []; // Array to store cart items
 
@@ -210,8 +212,8 @@
                 let productName = $(this).data('product-name');
                 let productPrice = parseFloat($(this).data('product-price'));
 
-                 let productQuantity = parseInt($(this).data('product-quantity')); // Retrieve product quantity
-                 let productStatus = parseInt($(this).data('product-status'));
+                let productQuantity = parseInt($(this).data('product-quantity')); // Retrieve product quantity
+                let productStatus = parseInt($(this).data('product-status'));
                 // Check if product quantity is valid
                 if (productQuantity && productQuantity > 0) {
                     if(productStatus == 1){
@@ -247,8 +249,6 @@
             $('#empty-cart-btn').on('click', function() {
                 emptyCart();
             });
-
-
 
             // Handle form submission
             $('#submit-order-btn').click(function() {
@@ -401,9 +401,9 @@
                 });
             });
         });
-
-
     </script>
+    <!-- Include the custom JavaScript file -->
+    <script src="{{ asset('cart/js/packaging.js') }}"></script>
 
 
 <style>
