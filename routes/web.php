@@ -20,8 +20,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
 // Redirect from '/' to '/admin'
-Route::redirect('/', '/admin/cart');
-
 Auth::routes();
 
 Route::prefix('/admin')->middleware('auth')->group(function () {
