@@ -12,35 +12,36 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
 
-    public function index() {
+    public function index()
+    {
         $orders = Order::query();
 
-        $customers = Order::with('customer:id,first_name,last_name')
-        ->select('customer_id')
-        ->distinct()
-        ->get()
-        ->map(function ($order) {
-            return [
-                'id' => $order->customer_id,
-                'name' => $order->getCustomerName(),
-            ];
-        });
-    
+        $customers = Order::with('customer:id,name')
+            ->select('customer_id')
+            ->distinct()
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->customer_id,
+                    'name' => $order->getCustomerName(),
+                ];
+            });
+
         // Load related items, payments, and customer
         $orders->with(['items', 'payments', 'customer']);
-    
+
         // Retrieve and paginate the filtered orders
         $orders = $orders->latest()->paginate(200);
-    
+
         // Calculate total and received amount
-        $total = $orders->map(function($i) {
+        $total = $orders->map(function ($i) {
             return $i->total();
         })->sum();
-        $receivedAmount =8;// $orders->map(function($i) {
+        $receivedAmount = 8; // $orders->map(function($i) {
         //     return $i->receivedAmount();
         // })->sum();
-    
-        return view('orders.index', compact('orders', 'total', 'receivedAmount','customers'));
+
+        return view('orders.index', compact('orders', 'total', 'receivedAmount', 'customers'));
     }
 
 
@@ -74,11 +75,11 @@ class OrderController extends Controller
                 default:
                     // If an invalid filter value is provided, return a meaningful error response
                     return response()->json(['error' => 'Invalid filter value'], 400);
-                }
+            }
         }
         // Get the selected statuses from the request
         $selectedStatuses = $request->input('status', []);
-        
+
         // Apply status filters if at least one status is selected
         if (!empty($selectedStatuses)) {
             // Filter orders based on selected statuses
@@ -87,7 +88,7 @@ class OrderController extends Controller
 
         // Get the selected statuses from the request
         $paymentFilter = $request->input('payment', []);
-        
+
         // Apply payment filters if at least one method is selected
         if (!empty($paymentFilter) && !in_array('empty', $paymentFilter)) {
             // Filter orders based on selected payment method
@@ -98,54 +99,54 @@ class OrderController extends Controller
                     }
                 });
             });
-        }else{
-		$query->whereHas('payments', function ($query) use ($paymentFilter) {
+        } else {
+            $query->whereHas('payments', function ($query) use ($paymentFilter) {
                 $query->where(function ($query) use ($paymentFilter) {
                     foreach ($paymentFilter as $method) {
                         $query->whereJsonContains('payment_methods', null)
-                        ->orWhereJsonContains('payment_methods', 'Unpaid')
-                        ->orWhereJsonContains('payment_methods', '[]')
-                        ->orWhereJsonContains('payment_methods', '');
+                            ->orWhereJsonContains('payment_methods', 'Unpaid')
+                            ->orWhereJsonContains('payment_methods', '[]')
+                            ->orWhereJsonContains('payment_methods', '');
                     }
                 });
             });
-	    }
+        }
 
         $selectedCustomers = $request->input('selectedCustomers');
         if ($selectedCustomers) {
-            $selectedCustomers = [3,1];
+            $selectedCustomers = [3, 1];
             $query->where(function ($query) use ($selectedCustomers) {
                 $query->whereNotIn('customer_id', $selectedCustomers)
                     ->orWhereNull('customer_id');
             });
         }
 
-    
+
         // Load related items, payments, and customer
         $query->with(['items.product', 'payments', 'customer']);
-    
+
         // Retrieve and paginate the filtered orders
         $orders = $query->latest()->paginate(200);
-    
+
         // Calculate total and received amount
-        $total = $orders->map(function($i) {
+        $total = $orders->map(function ($i) {
             return $i->total();
         })->sum();
-        $receivedAmount =8;// $orders->map(function($i) {
+        $receivedAmount = 8; // $orders->map(function($i) {
         //     return $i->receivedAmount();
         // })->sum();
 
         $customers = Order::with('customer:id,first_name,last_name')
-        ->select('customer_id')
-        ->distinct()
-        ->get()
-        ->map(function ($order) {
-            return [
-                'id' => $order->customer_id,
-                'name' => $order->getCustomerName(),
-            ];
-        });
-    
+            ->select('customer_id')
+            ->distinct()
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->customer_id,
+                    'name' => $order->getCustomerName(),
+                ];
+            });
+
         // return view('orders.index', compact('orders', 'total', 'receivedAmount','customers'));
         return response()->json([
             'orders' => $orders,
@@ -154,7 +155,7 @@ class OrderController extends Controller
             'customers' => $customers
         ]);
     }
-   
+
     public function store(OrderStoreRequest $request)
     {
         // Create the order
@@ -163,7 +164,7 @@ class OrderController extends Controller
             'user_id' => $request->user()->id,
             'commentForCook' => $request->commentForCook,
         ]);
-    
+
         // Loop through the cart items and associate them with the order
         foreach ($request->cart as $item) {
             $order->items()->create([
@@ -178,17 +179,21 @@ class OrderController extends Controller
             $product->counter += $item['quantity'];
             $product->save();
         }
-    
+
         // Create a payment record for the order
-        // $order->payments()->create([
-        //     'amount' => $request->amount,
-        //     'payment_methods' => json_encode($request->payment_methods),
-        //     'user_id' => $request->user()->id,
-        // ]);
-    
+        if ($request->paid) {
+
+            $order->payments()->create([
+                'paid' => $request->paid,
+                'payment_method_id' => $request->payment_method_id,
+                // 'payment_methods' => json_encode($request->payment_methods),
+                'order_id' => $order->id,
+                'user_id' => $request->user()->id,
+            ]);
+        }
+
         // You can trigger events or notifications here if needed
-    
+
         return 'success: order created';
     }
-
 }
