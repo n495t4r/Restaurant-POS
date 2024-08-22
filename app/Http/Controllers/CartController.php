@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\OrderChannel;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,8 @@ class CartController extends Controller
         // Fetch products from the database
         // $products = Product::all();
         $products = Product::where('status',1)->paginate(10);
-        $customers = Customer::all();
+        $customers = Customer::where('is_active', 1)->get();
+        $channels = OrderChannel::where('is_active', 1)->get();
 
         if ($request->ajax()) {
 
@@ -30,6 +32,7 @@ class CartController extends Controller
         return view('cart.index', [
             'products' => $products,
             'customers' => $customers,
+            'channels' => $channels,
         ]);
 
     }

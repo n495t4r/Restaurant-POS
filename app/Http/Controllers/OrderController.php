@@ -161,6 +161,7 @@ class OrderController extends Controller
         // Create the order
         $order = Order::create([
             'customer_id' => $request->customer_id,
+            'channel_id' => $request->channel_id,
             'user_id' => $request->user()->id,
             'commentForCook' => $request->commentForCook,
         ]);

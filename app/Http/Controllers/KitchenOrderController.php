@@ -21,28 +21,28 @@ class KitchenOrderController extends Controller
     // }
 
     public function index()
-{
-    $kitchenOrders = Order::where('status', 'pending')
-        ->with(['items.product.product_category.parent'])
-        ->orderBy('created_at', 'desc')
-        ->get();
+    {
+        $kitchenOrders = Order::where('status', 'pending')
+            ->with(['items.product.product_category.parent'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    foreach ($kitchenOrders as $order) {
-        $order->items = $order->items->filter(function ($item) {
-            $parentCategoryName = $item->product->getParentCategoryName();
-            return $parentCategoryName !== 'Drinks' && !empty($parentCategoryName);
-        });
+        foreach ($kitchenOrders as $order) {
+            $order->items = $order->items->filter(function ($item) {
+                $parentCategoryName = $item->product->getParentCategoryName();
+                return $parentCategoryName !== 'Drinks' && !empty($parentCategoryName);
+            });
+        }
+
+        // Check if any kitchen order has no items left after filtering
+        if ($kitchenOrders->isEmpty() || $kitchenOrders->every(function ($order) {
+            return $order->items->isEmpty();
+        })) {
+            $kitchenOrders = collect(); // Set the kitchen orders to an empty collection
+        }
+
+        return view('kitchen.index', compact('kitchenOrders'));
     }
-
-    // Check if any kitchen order has no items left after filtering
-    if ($kitchenOrders->isEmpty() || $kitchenOrders->every(function ($order) {
-        return $order->items->isEmpty();
-    })) {
-        $kitchenOrders = collect(); // Set the kitchen orders to an empty collection
-    }
-
-    return view('kitchen.index', compact('kitchenOrders'));
-}
 
 
     public function getPendingOrders(Request $request)
@@ -53,44 +53,44 @@ class KitchenOrderController extends Controller
             ->with(['items.product'])
             ->orderBy('created_at', 'desc')
             ->get();
-    
+
         foreach ($pendingOrders as $order) {
             $order->items = $order->items->filter(function ($item) {
                 return !$item->product->getParentCategoryName() === 'Drinks';
             });
         }
-    
+
         return $pendingOrders;
     }
-    
 
 
-    
+
+
 
     public function drinks()
-{
-    // die("Index controller");
-    $kitchenOrders = Order::where('status', 'pending')
-        ->with(['items.product'])
-       
-        ->orderBy('created_at', 'desc')
-        // ->limit(2)
-        ->get();
+    {
+        // die("Index controller");
+        $kitchenOrders = Order::where('status', 'pending')
+            ->with(['items.product'])
 
-    return view('drinks.index', compact('kitchenOrders'));
-}
+            ->orderBy('created_at', 'desc')
+            // ->limit(2)
+            ->get();
+
+        return view('drinks.index', compact('kitchenOrders'));
+    }
 
     public function getPendingOrders2(Request $request)
     {
         $lastDisplayedOrderId = $request->query('lastDisplayedOrderId');
         $pendingOrders = Order::where('status', 'pending')
-        ->where('id', '>', $lastDisplayedOrderId)
-        ->with(['items.product'])
-        ->orderBy('created_at', 'desc')
-        ->get();
+            ->where('id', '>', $lastDisplayedOrderId)
+            ->with(['items.product'])
+            ->orderBy('created_at', 'desc')
+            ->get();
         return $pendingOrders;
     }
-    
+
 
 
     public function show($id)
@@ -110,9 +110,9 @@ class KitchenOrderController extends Controller
             $order->customer_id = $request->customer_id;
             $order->save();
         }
-        
+
         if ($request->has('payment_method')) {
-            
+
             try {
 
                 // Validate the request data
@@ -137,26 +137,33 @@ class KitchenOrderController extends Controller
                 // Log or handle the error as needed
                 return response()->json(['message' => 'Database error: ' . $e->getMessage()], 500);
             } catch (\Exception $e) {
-            //     // Handle other exceptions
+                //     // Handle other exceptions
                 return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
             }
         }
-        
-        if($order->status === 'processed' || $order->status === 'failed') {
-            return response()->json(['message' => 'Order already marked as '.$order->status]);
-        }else{
-            
 
-            if(isset($request->is_done)){
+        if ($order->status === 1 || $order->status === 0) {
+            $status_msg = '';
+            if ($order->status === 1) {
+                $status_msg = 'Completed!';
+            } else if ($order->status === 0) {
+                $status_msg = 'Failed!';
+            }
+
+            return response()->json(['message' => 'Order already marked as ' . $status_msg]);
+        } else {
+
+
+            if (isset($request->is_done)) {
 
                 $this->validate($request, [
                     'is_done' => 'required|boolean',
                 ]);
 
-                $status = $request->is_done ? 'processed' : 'failed';
+                $status = $request->is_done ? 1 : 0;
                 $reason = '';
-                
-                if(isset($request->reason)){
+
+                if (isset($request->reason)) {
                     $reason = $request->reason;
                 }
 
@@ -166,7 +173,7 @@ class KitchenOrderController extends Controller
                     $order->status = $status;
                     $order->reason = $reason;
 
-                    if($order->status == 'failed') {
+                    if ($order->status == 0) {
                         foreach ($order->items as $item) {
                             $product = Product::find($item->product_id);
                             $product->quantity += $item->quantity;
@@ -180,15 +187,12 @@ class KitchenOrderController extends Controller
                 return response()->json(['message' => 'Order status updated successfully']);
             }
         }
-      // Retrieve customer name and payment methods for response
-      $response = [];
-      if ($request->filled('customer_id') || $request->filled('payment_method')) {
-          $response['customer_name'] = $order->getCustomerName();
-          $response['payment_method'] = $order->payment_methods();
-          return response()->json($response);
-      }
-       
+        // Retrieve customer name and payment methods for response
+        $response = [];
+        if ($request->filled('customer_id') || $request->filled('payment_method')) {
+            $response['customer_name'] = $order->getCustomerName();
+            $response['payment_method'] = $order->payment_methods();
+            return response()->json($response);
+        }
     }
 }
-
-

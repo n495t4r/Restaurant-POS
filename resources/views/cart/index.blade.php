@@ -13,11 +13,24 @@
         </div>
 
         <div class="col-md-5 col-lg-5">
-            <!-- Customer dropdown and payment method checkboxes -->
+
+            <!-- Channel dropdown -->
+            <div class="row">
+                <div class="col-md-4">
+                    <select id="channel-dropdown" class="form-control" required>
+                        <option value="">Order Channel</option>
+                        @foreach($channels as $channel)
+                        <option value="{{ $channel->id }}">{{ $channel->channel }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <!-- Customer dropdown -->
             <div class="row">
                 <div class="col-md-4">
                     <select id="customer-dropdown" class="form-control">
-                        <option value="">Select Customer</option>
+                        <option value="">Customer</option>
                         @foreach($customers as $customer)
                         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                         @endforeach
@@ -154,6 +167,7 @@
             });
             $('#total-amount').text(totalAmount.toFixed(2));
             updateButtons();
+            staff_order_selected();
         }
 
         // Event listener for deleting an item from the cart
@@ -186,6 +200,17 @@
             }
         }
 
+        // staff order selected
+        $('#channel-dropdown').on('change', function() {
+            if ($(this).val() == 6) {
+                // Clear selected customer
+                $('#customer-dropdown').val('');
+                $('#customer-dropdown').prop('disabled', true);
+            } else {
+                $('#customer-dropdown').prop('disabled', false);
+            }
+        });
+
         // empty cart 
         function emptyCart() {
             cart = [];
@@ -193,6 +218,8 @@
 
             // Clear selected customer
             $('#customer-dropdown').val('');
+            // Clear selected channel
+            $('#channel-dropdown').val('');
 
             // Uncheck all payment method checkboxes
             $('input[name="payment-method-id"]:checked').prop('checked', false);
@@ -243,11 +270,14 @@
         // Event listener for emptying the cart
         $('#empty-cart-btn').on('click', function() {
             emptyCart();
+            // Clear selected customer
+            $('#customer-dropdown').val('');
         });
 
         // Handle form submission
         $('#submit-order-btn').click(function() {
             let customerId = $('#customer-dropdown').val();
+            let channelId = $('#channel-dropdown').val();
             var payment_method_id;
             let commentForCook = $('#comment-for-cook').val();
             let amountText = $('#total-amount').text();
@@ -270,6 +300,16 @@
                 showCancelButton: true,
                 confirmButtonText: 'Confirm',
                 cancelButtonText: 'Cancel',
+            //     didOpen: () => {
+            //         // Disable payment fields if channelId == 6
+            //         if (true) {
+            //             if (true) {  // Always true for testing
+            // document.getElementById('swal-input-paid').disabled = true;
+            // document.querySelectorAll('#payment-method-container input').forEach(input => {
+            //     input.disabled = true;
+            // });
+        // }
+                // },
                 preConfirm: () => {
                     const amountPaid = $('#swal-input-paid').val();
                     const paymentMethodId = $('input[name="payment-method-id"]:checked').val();
@@ -277,7 +317,7 @@
                     if (amountPaid && !paymentMethodId) {
                         Swal.showValidationMessage('Please select the payment method!');
                         return false;
-                    }else if (!amountPaid && paymentMethodId) {
+                    } else if (!amountPaid && paymentMethodId) {
                         Swal.showValidationMessage('Enter amount paid by customer!');
                         return false;
                     }
@@ -287,7 +327,7 @@
                         payment_method_id: paymentMethodId
                     };
                 },
-                
+
             }).then((result) => {
                 if (result) {
                     // Proceed with the order submission
@@ -302,6 +342,7 @@
                             amount: result.value.amount, // Use the amount from the SweetAlert input
                             paid: result.value.paid, // Use the amount from the SweetAlert input
                             customer_id: customerId,
+                            channel_id: channelId,
                             payment_method_id: result.value.payment_method_id,
                             commentForCook: commentForCook, // Use the updated comment
                             cart: cart
@@ -326,6 +367,7 @@
         // Event listener for the "Print Cart" button
         $('#print-cart-btn').click(function() {
             let customerId = $('#customer-dropdown').val();
+            let channelId = $('#channel-dropdown').val();
             let paymentMethods = [];
             $('input[type=checkbox][id^=payment-method-]').each(function() {
                 if ($(this).is(':checked')) {
@@ -348,6 +390,7 @@
                 data: {
                     page: 'cart',
                     customerId: customerId,
+                    channelId: channelId,
                     paymentMethods: paymentMethods,
                     commentForCook: commentForCook,
                     amount: amount,

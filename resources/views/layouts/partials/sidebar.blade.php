@@ -36,7 +36,7 @@
                     </a>
               
                 </li>
-            
+            @if(auth()->id() == 2)
                 <li class="nav-item has-treeview">
               
                     <a href="{{ route('kitchen.index') }}" class="nav-link {{ activeSegment('kitchen') }}">
@@ -45,7 +45,7 @@
                     </a>
            
                 </li>
-              
+              @endif
                 
             </ul>
         </nav>
