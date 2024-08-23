@@ -1,3 +1,60 @@
+# Laravel specific
 /vendor
-.env
-node_modules
+/node_modules
+/public/storage
+/storage/*.key
+/storage/*.log
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+/.env
+.phpunit.result.cache
+
+# Laravel IDE Helper
+.phpstorm.meta.php
+_ide_helper.php
+_ide_helper_models.php
+
+# Laravel Dusk
+/tests/Browser/screenshots
+/tests/Browser/console
+/tests/Browser/source
+
+# Composer
+composer.lock
+
+# NPM/Yarn
+yarn-error.log
+npm-debug.log
+package-lock.json
+
+# Vagrant
+.vagrant
+
+# IDE Specific
+/.idea
+/.vscode
+*.swp
+*~.nib
+*~
+._*
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Mac OS specific
+*.DS_Store
+*.AppleDouble
+*.LSOverride
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific
+*~
+.cache
