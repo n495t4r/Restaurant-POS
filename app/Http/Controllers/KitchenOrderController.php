@@ -22,7 +22,7 @@ class KitchenOrderController extends Controller
 
     public function index()
     {
-        $kitchenOrders = Order::where('status', 'pending')
+        $kitchenOrders = Order::where('status', 2)
             ->with(['items.product.product_category.parent'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -48,7 +48,7 @@ class KitchenOrderController extends Controller
     public function getPendingOrders(Request $request)
     {
         $lastDisplayedOrderId = $request->query('lastDisplayedOrderId');
-        $pendingOrders = Order::where('status', 'pending')
+        $pendingOrders = Order::where('status', 2)
             ->where('id', '>', $lastDisplayedOrderId)
             ->with(['items.product'])
             ->orderBy('created_at', 'desc')
@@ -70,7 +70,7 @@ class KitchenOrderController extends Controller
     public function drinks()
     {
         // die("Index controller");
-        $kitchenOrders = Order::where('status', 'pending')
+        $kitchenOrders = Order::where('status', 2)
             ->with(['items.product'])
 
             ->orderBy('created_at', 'desc')
@@ -83,7 +83,7 @@ class KitchenOrderController extends Controller
     public function getPendingOrders2(Request $request)
     {
         $lastDisplayedOrderId = $request->query('lastDisplayedOrderId');
-        $pendingOrders = Order::where('status', 'pending')
+        $pendingOrders = Order::where('status', 2)
             ->where('id', '>', $lastDisplayedOrderId)
             ->with(['items.product'])
             ->orderBy('created_at', 'desc')
