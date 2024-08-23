@@ -9,7 +9,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use Notifiable, HasRoles;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -38,10 +38,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function hasPermission($permission)
-    {
-        return $this->hasPermissionTo($permission);
-    }
+    // public function hasPermission($permission)
+    // {
+    //     return $this->hasPermissionTo($permission);
+    // }
     
     public function cart()
     {
