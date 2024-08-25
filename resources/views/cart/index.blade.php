@@ -167,7 +167,6 @@
             });
             $('#total-amount').text(totalAmount.toFixed(2));
             updateButtons();
-            staff_order_selected();
         }
 
         // Event listener for deleting an item from the cart
@@ -201,31 +200,31 @@
         }
 
         // staff order selected
-        $('#channel-dropdown').on('change', function() {
-            if ($(this).val() == 6) {
-                // Clear selected customer
-                $('#customer-dropdown').val('');
-                $('#customer-dropdown').prop('disabled', true);
-            } else {
-                $('#customer-dropdown').prop('disabled', false);
-            }
-        });
+        // $('#channel-dropdown').on('change', function() {
+        //     if ($(this).val() == 6) {
+        //         // Clear selected customer
+        //         $('#customer-dropdown').val('');
+        //         $('#customer-dropdown').prop('disabled', true);
+        //     } else {
+        //         $('#customer-dropdown').prop('disabled', false);
+        //     }
+        // });
 
         // empty cart 
         function emptyCart() {
             cart = [];
-            renderCart();
-
             // Clear selected customer
             $('#customer-dropdown').val('');
             // Clear selected channel
             $('#channel-dropdown').val('');
 
             // Uncheck all payment method checkboxes
-            $('input[name="payment-method-id"]:checked').prop('checked', false);
+            // $('input[name="payment-method-id"]:checked').prop('checked', false);
 
             // Clear comment for cook input
             $('#comment-for-cook').val('');
+
+            renderCart();
         }
 
         // Event listener for adding products to cart (using event delegation)
@@ -271,7 +270,7 @@
         $('#empty-cart-btn').on('click', function() {
             emptyCart();
             // Clear selected customer
-            $('#customer-dropdown').val('');
+            // $('#customer-dropdown').val('');
         });
 
         // Handle form submission
@@ -285,10 +284,17 @@
             let paidText = $('#total-paid').text();
             let paid = parseFloat(paidText);
 
-            // Create SweetAlert popup with input for the comment
-            Swal.fire({
-                title: 'Confirm payment',
-                html: `
+            if (channelId == 6 && amount > 2000) {
+                Swal.fire(
+                    'Exceeded!',
+                    'Orders should not exceed N2000',
+                    'warning'
+                );
+            } else {
+                // Create SweetAlert popup with input for the payment
+                Swal.fire({
+                    title: 'Confirm payment',
+                    html: `
     <div class="col">
         <input type='number' id='swal-input-paid' class='swal2-input' placeholder='${amount}' value='' step='50' min='0' max='${amount}'>
         <div id='payment-method-container' class='payment_method_id'>
@@ -297,68 +303,63 @@
             <input type='radio' id='payment-method-transfer' name='payment-method-id' value='2'> <label for='payment-method-transfer'>Transfer</label>
         </div>
     </div>`,
-                showCancelButton: true,
-                confirmButtonText: 'Confirm',
-                cancelButtonText: 'Cancel',
-            //     didOpen: () => {
-            //         // Disable payment fields if channelId == 6
-            //         if (true) {
-            //             if (true) {  // Always true for testing
-            // document.getElementById('swal-input-paid').disabled = true;
-            // document.querySelectorAll('#payment-method-container input').forEach(input => {
-            //     input.disabled = true;
-            // });
-        // }
-                // },
-                preConfirm: () => {
-                    const amountPaid = $('#swal-input-paid').val();
-                    const paymentMethodId = $('input[name="payment-method-id"]:checked').val();
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirm',
+                    cancelButtonText: 'Cancel',
+                    preConfirm: () => {
+                        const amountPaid = $('#swal-input-paid').val();
+                        const paymentMethodId = $('input[name="payment-method-id"]:checked').val();
 
-                    if (amountPaid && !paymentMethodId) {
-                        Swal.showValidationMessage('Please select the payment method!');
-                        return false;
-                    } else if (!amountPaid && paymentMethodId) {
-                        Swal.showValidationMessage('Enter amount paid by customer!');
-                        return false;
-                    }
-
-                    return {
-                        paid: amountPaid,
-                        payment_method_id: paymentMethodId
-                    };
-                },
-
-            }).then((result) => {
-                if (result) {
-                    // Proceed with the order submission
-                    var csrfToken = window.Laravel.csrfToken;
-                    $.ajax({
-                        url: '/admin/orders',
-                        type: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken
-                        },
-                        data: {
-                            amount: result.value.amount, // Use the amount from the SweetAlert input
-                            paid: result.value.paid, // Use the amount from the SweetAlert input
-                            customer_id: customerId,
-                            channel_id: channelId,
-                            payment_method_id: result.value.payment_method_id,
-                            commentForCook: commentForCook, // Use the updated comment
-                            cart: cart
-                        },
-                        success: function(response) {
-                            console.log(response);
-                            emptyCart();
-                        },
-                        error: function(xhr, status, error) {
-                            console.error(xhr.responseText);
+                        if (amountPaid && !paymentMethodId) {
+                            Swal.showValidationMessage('Please select the payment method!');
+                            return false;
+                        } else if (!amountPaid && paymentMethodId) {
+                            Swal.showValidationMessage('Enter amount paid by customer!');
+                            return false;
                         }
-                    });
-                }
-            });
 
+                        if(amountPaid > amount){
+                            Swal.showValidationMessage('Overpaid!');
+                            return false;
+                        }
 
+                        return {
+                            paid: amountPaid,
+                            payment_method_id: paymentMethodId
+                        };
+                    },
+
+                }).then((result) => {
+                    if (result) {
+                        // Proceed with the order submission
+                        var csrfToken = window.Laravel.csrfToken;
+                        $.ajax({
+                            url: '/admin/orders',
+                            type: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            data: {
+                                amount: result.value.amount, // Use the amount from the SweetAlert input
+                                paid: result.value.paid, // Use the amount from the SweetAlert input
+                                customer_id: customerId,
+                                channel_id: channelId,
+                                payment_method_id: result.value.payment_method_id,
+                                commentForCook: commentForCook, // Use the updated comment
+                                cart: cart
+                            },
+                            success: function(response) {
+                                console.log(response);
+                                emptyCart();
+                            },
+                            error: function(xhr, status, error) {
+                                console.error(xhr.responseText);
+                            }
+                        });
+                    }
+                });
+
+            }
         });
 
         // Initial rendering of products on page load
