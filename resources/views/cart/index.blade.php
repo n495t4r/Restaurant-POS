@@ -5,12 +5,12 @@
 @section('content')
 <div id="cart">
     <div class="row">
-        <div class="col-md-1 col-lg-1">
+        <!-- <div class="col-md-1 col-lg-1">
             <div class="btn-group-vertical" role="group">
                 <button id="print-cart-btn" class="btn btn-primary mb-2">Print Cart</button>
-                <!-- Add more buttons here as needed -->
+                Add more buttons here as needed 
             </div>
-        </div>
+        </div> -->
 
         <div class="col-md-5 col-lg-5">
 
