@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CustomerStoreRequest;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,10 +16,10 @@ class CustomerController extends Controller
 
     function __construct()
     {
-         $this->middleware('permission:customer-list|customer-create|customer-edit|customer-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:customer-create', ['only' => ['create','store']]);
-         $this->middleware('permission:customer-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:customer-delete', ['only' => ['destroy']]);
+        //  $this->middleware('permission:customer-list|customer-create|customer-edit|customer-delete', ['only' => ['index','store']]);
+        //  $this->middleware('permission:customer-create', ['only' => ['create','store']]);
+        //  $this->middleware('permission:customer-edit', ['only' => ['edit','update']]);
+        //  $this->middleware('permission:customer-delete', ['only' => ['destroy']]);
     }
 
     /**
@@ -33,6 +36,23 @@ class CustomerController extends Controller
         }
         $customers = Customer::latest()->paginate(10);
         return view('customers.index')->with('customers', $customers);
+    }
+
+    public function getTotalOrders(Request $request)
+    {
+        $customerId = $request->input('customer_id');
+        $today = Carbon::today();
+
+        $total = OrderItem::whereHas('order', function($query) use ($customerId, $today) {
+            $query->where('customer_id', $customerId)
+                  ->whereDate('created_at', $today)
+                  ->where('status', '!=', 0);
+        })->sum('price');
+
+         // If no results found, $total will be null, so we coalesce it to 0
+         $total = floatval($total);
+
+        return response()->json(['total' => $total]);
     }
 
     /**

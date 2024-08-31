@@ -284,17 +284,54 @@
             let paidText = $('#total-paid').text();
             let paid = parseFloat(paidText);
 
-            if (channelId == 6 && amount > 2000) {
-                Swal.fire(
-                    'Exceeded!',
-                    'Orders should not exceed N2000',
-                    'warning'
-                );
+            if (channelId == 6) {
+                if (customerId == '') {
+                    Swal.fire(
+                        'Staff',
+                        'Please select a staff name',
+                        'warning'
+                    );
+                } else {
+                    $.ajax({
+                        url: '/api/customer-total-orders',
+                        method: 'GET',
+                        data: {
+                            customer_id: customerId
+                        },
+                        success: function(response) {
+                            let totalCustomerOrders = parseFloat(response.total);
+
+                            if (channelId == 6 && (amount + totalCustomerOrders) > 2000) {
+                                Swal.fire(
+                                    'Exceeded!',
+                                    'Orders should not exceed N2000',
+                                    'warning'
+                                );
+                            } else {
+                                submitOrder(customerId, channelId, commentForCook, amount, paid);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching customer total orders:', error);
+                            Swal.fire(
+                                'Error',
+                                'Unable to verify customer order total. Please try again.',
+                                'error'
+                            );
+                        }
+                    });
+                }
             } else {
-                // Create SweetAlert popup with input for the payment
-                Swal.fire({
-                    title: 'Confirm payment',
-                    html: `
+                submitOrder(customerId, channelId, commentForCook, amount, paid);
+            }
+        });
+
+        function submitOrder(customerId, channelId, commentForCook, amount, paid) {
+
+            // Create SweetAlert popup with input for the payment
+            Swal.fire({
+                title: 'Confirm payment',
+                html: `
     <div class="col">
         <input type='number' id='swal-input-paid' class='swal2-input' placeholder='${amount}' value='' step='50' min='0' max='${amount}'>
         <div id='payment-method-container' class='payment_method_id'>
@@ -303,65 +340,62 @@
             <input type='radio' id='payment-method-transfer' name='payment-method-id' value='2'> <label for='payment-method-transfer'>Transfer</label>
         </div>
     </div>`,
-                    showCancelButton: true,
-                    confirmButtonText: 'Confirm',
-                    cancelButtonText: 'Cancel',
-                    preConfirm: () => {
-                        const amountPaid = $('#swal-input-paid').val();
-                        const paymentMethodId = $('input[name="payment-method-id"]:checked').val();
+                showCancelButton: true,
+                confirmButtonText: 'Confirm',
+                cancelButtonText: 'Cancel',
+                preConfirm: () => {
+                    const amountPaid = $('#swal-input-paid').val();
+                    const paymentMethodId = $('input[name="payment-method-id"]:checked').val();
 
-                        if (amountPaid && !paymentMethodId) {
-                            Swal.showValidationMessage('Please select the payment method!');
-                            return false;
-                        } else if (!amountPaid && paymentMethodId) {
-                            Swal.showValidationMessage('Enter amount paid by customer!');
-                            return false;
-                        }
-
-                        if(amountPaid > amount){
-                            Swal.showValidationMessage('Overpaid!');
-                            return false;
-                        }
-
-                        return {
-                            paid: amountPaid,
-                            payment_method_id: paymentMethodId
-                        };
-                    },
-
-                }).then((result) => {
-                    if (result) {
-                        // Proceed with the order submission
-                        var csrfToken = window.Laravel.csrfToken;
-                        $.ajax({
-                            url: '/admin/orders',
-                            type: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken
-                            },
-                            data: {
-                                amount: result.value.amount, // Use the amount from the SweetAlert input
-                                paid: result.value.paid, // Use the amount from the SweetAlert input
-                                customer_id: customerId,
-                                channel_id: channelId,
-                                payment_method_id: result.value.payment_method_id,
-                                commentForCook: commentForCook, // Use the updated comment
-                                cart: cart
-                            },
-                            success: function(response) {
-                                console.log(response);
-                                emptyCart();
-                            },
-                            error: function(xhr, status, error) {
-                                console.error(xhr.responseText);
-                            }
-                        });
+                    if (amountPaid && !paymentMethodId) {
+                        Swal.showValidationMessage('Please select the payment method!');
+                        return false;
+                    } else if (!amountPaid && paymentMethodId) {
+                        Swal.showValidationMessage('Enter amount paid by customer!');
+                        return false;
                     }
-                });
 
-            }
-        });
+                    if (amountPaid > amount) {
+                        Swal.showValidationMessage('Overpaid!');
+                        return false;
+                    }
 
+                    return {
+                        paid: amountPaid,
+                        payment_method_id: paymentMethodId
+                    };
+                },
+
+            }).then((result) => {
+                if (result) {
+                    // Proceed with the order submission
+                    var csrfToken = window.Laravel.csrfToken;
+                    $.ajax({
+                        url: '/admin/orders',
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        data: {
+                            amount: result.value.amount, // Use the amount from the SweetAlert input
+                            paid: result.value.paid, // Use the amount from the SweetAlert input
+                            customer_id: customerId,
+                            channel_id: channelId,
+                            payment_method_id: result.value.payment_method_id,
+                            commentForCook: commentForCook, // Use the updated comment
+                            cart: cart
+                        },
+                        success: function(response) {
+                            console.log(response);
+                            emptyCart();
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                        }
+                    });
+                }
+            });
+        }
         // Initial rendering of products on page load
         // renderProducts();
 
