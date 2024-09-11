@@ -43,14 +43,15 @@ class CustomerController extends Controller
         $customerId = $request->input('customer_id');
         $today = Carbon::today();
 
-        $total = OrderItem::whereHas('order', function($query) use ($customerId, $today) {
+        $total = OrderItem::whereHas('order', function ($query) use ($customerId, $today) {
             $query->where('customer_id', $customerId)
-                  ->whereDate('created_at', $today)
-                  ->where('status', '!=', 0);
+                ->where('channel_id', 6)
+                ->whereDate('created_at', $today)
+                ->where('status', '!=', 0);
         })->sum('price');
 
-         // If no results found, $total will be null, so we coalesce it to 0
-         $total = floatval($total);
+        // If no results found, $total will be null, so we coalesce it to 0
+        $total = floatval($total);
 
         return response()->json(['total' => $total]);
     }
@@ -101,9 +102,7 @@ class CustomerController extends Controller
      * @param  \App\Models\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    public function show(Customer $customer)
-    {
-    }
+    public function show(Customer $customer) {}
 
     /**
      * Show the form for editing the specified resource.
@@ -156,8 +155,8 @@ class CustomerController extends Controller
 
         $customer->delete();
 
-       return response()->json([
-           'success' => true
-       ]);
+        return response()->json([
+            'success' => true
+        ]);
     }
 }
