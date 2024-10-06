@@ -36,7 +36,7 @@
                     </a>
               
                 </li>
-            @if(auth()->id() == 2)
+            @if(auth()->user()->hasRole('super_admin') ||  auth()->user()->hasRole('Manager') )
                 <li class="nav-item has-treeview">
               
                     <a href="{{ route('kitchen.index') }}" class="nav-link {{ activeSegment('kitchen') }}">
